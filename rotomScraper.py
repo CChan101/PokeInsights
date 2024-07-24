@@ -56,8 +56,10 @@ for months in months_avaliable:
         try:
             # Keep going through each tier/generation in successive for loop
             full_link = url.format(months, tier)
+            
             # Read the link every iteration
             new_df = pd.read_csv(full_link)
+            
             # Manipulate Data until you get seperate columns
             new_df.columns = ['All']
             new_df = new_df.drop([0, 1, 2, 3, ])
@@ -83,13 +85,14 @@ for months in months_avaliable:
             break
         if skip_outer_loop:
             continue
+            
 # Concatenate all DataFrames in the list into one DataFrame
 df_final = pd.concat(list_df, ignore_index=True)
+
 # Normalize the 'Name' and Stats columns in each DataFrame
 sprite_links['Name'] = sprite_links['Name'].str.strip().str.title()
 df_final['Name'] = df_final['Name'].str.strip().str.title()
 pokemon_stats['Name'] = pokemon_stats['Name'].str.strip().str.title()
-# df_final['HP'] = df_final['HP'].str.strip().str.title()
 pokemon_stats['HP'] = pokemon_stats['HP'].astype(str)
 pokemon_stats['HP'] = pokemon_stats['HP'].str.strip().str.title()
 
