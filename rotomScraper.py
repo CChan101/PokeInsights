@@ -30,12 +30,12 @@ sprite_links = pd.DataFrame(sprite_list)
 # Get pokemon stats from "list_of_pokemon_df.csv"
 pokemon_stats = pd.read_csv("list_of_pokemon_df.csv")
 
-gen9_months_avaliable = ["2024-06", "2024-05", "2024-04", "2024-03", "2024-02", "2024-01",
+months_avaliable = ["2024-06", "2024-05", "2024-04", "2024-03", "2024-02", "2024-01",
                          "2023-12", "2023-11", "2023-10", "2023-09", "2023-08", "2023-07", "2023-06",
                          "2023-05", "2023-04", "2023-03", "2023-02", "2023-01",
                          "2022-12", "2022-11", "2022-10"]
 
-gen9_tier_list = ["gen9ubers", "gen9ou", "gen9uu", "gen9ru", "gen9nu", "gen9pu", "gen9zu"]
+tier_list = ["gen9ubers", "gen9ou", "gen9uu", "gen9ru", "gen9nu", "gen9pu", "gen9zu"]
 
 # List to hold the dataframes
 list_df = []
@@ -49,10 +49,10 @@ pd.set_option('display.max_columns', 7)
 
 condition = sprite_links['Name']
 # Read the csv with each loop iteration until you get the full list
-for months in gen9_months_avaliable:
+for months in months_avaliable:
     # Use a flag to skip outer loop iteration(month) if inner loop(tier) encounters an error
     skip_outer_loop = False
-    for tier in gen9_tier_list:
+    for tier in tier_list:
         try:
             # Keep going through each tier/generation in successive for loop
             full_link = url.format(months, tier)
@@ -75,8 +75,6 @@ for months in gen9_months_avaliable:
             new_df = new_df.drop(columns=columns_to_drop)
             new_df['Tier'] = tier
             new_df['Month'] = months
-            # Fuck you
-            # new_df['Sprite Links'] = sprite_links[sprite_links['Image URL'][new_df['Name']]]
 
             # Append the new DataFrame to the list
             list_df.append(new_df)
@@ -117,20 +115,20 @@ df_final['Sp.Defense'] = df_final['Name'].map(sp_defense)
 df_final['Speed'] = df_final['Name'].map(speed)
 df_final['Type1'] = df_final['Name'].map(type_one)
 df_final['Type2'] = df_final['Name'].map(type_two)
+
 # Get BST of each pokemon
 columns_to_sum = ['HP', 'Attack', 'Defense', "Sp.Attack", "Sp.Defense", "Speed"]
+
 # Convert columns to numeric, forcing any errors to NaN
 df_final[columns_to_sum] = df_final[columns_to_sum].apply(pd.to_numeric, errors='coerce')
 df_final['BST'] = df_final[columns_to_sum].sum(axis=1)
-# df_final['Sprite Links'] = pd.merge(df_final, sprite_links, on=['Name'], how='left')
+
 # Convert entire 'Month' column to datetime format
 df_final['Month'] = pd.to_datetime(df_final['Month'], format='%Y-%m')
 df_final['Month'] = df_final['Month'].dt.strftime('%Y-%m')
 # Convert entire 'Usage' column to numeric
 df_final['Usage Rate'] = df_final['Usage Rate'].str.replace('%', '')
 df_final['Usage Rate'] = df_final['Usage Rate'].apply(pd.to_numeric)
-# print(df_final)
-# df_final.to_excel('sample_data.xlsx')
 
 df_final.to_excel('sample_data.xlsx')
 print("Data successfully scraped!")
