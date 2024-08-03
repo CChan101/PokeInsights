@@ -1,4 +1,6 @@
 import datetime
+from collections import Counter
+
 import plotly.express as px
 import pandas as pd
 import dash
@@ -22,6 +24,7 @@ app.layout = html.Div(
            "paddingLeft": "10px",
            "textAlign": "center", }, className='dynamic-width',
     children=[
+        html.Meta(name="viewport", content="width=device-width, initial-scale=1.0"),
         html.Img(src=r"/assets/PokeInsights Logo.png",
                  className='image-zoom', style={'textAlign': 'center'}),
         html.H4(
@@ -57,6 +60,14 @@ app.layout = html.Div(
                 {'label': 'GEN9NU', 'value': 'gen9nu'},
                 {'label': 'GEN9PU', 'value': 'gen9pu'},
                 {'label': 'GEN9ZU', 'value': 'gen9zu'},
+                {'label': 'GEN8OU', 'value': 'gen8ou'},
+                {'label': 'GEN7OU', 'value': 'gen7ou'},
+                {'label': 'GEN6OU', 'value': 'gen6ou'},
+                {'label': 'GEN5OU', 'value': 'gen5ou'},
+                {'label': 'GEN4OU', 'value': 'gen4ou'},
+                {'label': 'GEN3OU', 'value': 'gen3ou'},
+                {'label': 'GEN2OU', 'value': 'gen2ou'},
+                {'label': 'GEN1OU', 'value': 'gen1ou'},
             ],
             style={
                 'width': '150px',
@@ -65,6 +76,13 @@ app.layout = html.Div(
             value='gen9ou',  # Default Value
             searchable=False,
             clearable=False
+        ), dcc.Dropdown(
+            id='ladder-ranking',
+            options=[],  # We'll populate this dynamically
+            value=None,  # We'll set this dynamically
+            searchable=False,
+            clearable=False,
+            style={'width': '150px', 'font-family': 'Roboto, sans-serif'}
         ),
         dcc.Graph(id='line-graph', className='center dash-graph', responsive=True),
         html.Div([
@@ -81,20 +99,20 @@ app.layout = html.Div(
                   'border': '2px solid white', 'padding': '10px', 'backgroundColor': '#111111',
                   'width': '800px', 'height': '450px', 'marginTop': '50px'},
             className='center dash-zoom'),
-        html.Div(id='conditional-text', style={  # Add div for conditional text
-            'clear': 'both',  # Clears any floating elements
+        html.Div(id='conditional-text', style= {
+            'clear': 'both',
             'paddingTop': '30px',
             'marginTop': '50px',
             'margin': '0 auto',
             'font-family': 'Roboto, sans-serif',
-            'text-align': 'center'  # Adjust as needed)
+            'text-align': 'center'
         }, className='fun-facts'),
         html.Div([
-            html.P('v1.0'),
+            html.P('v1.01', style={'margin': 0}),
+            html.P('Added support for past OU generations and tier rankings', style={'margin': 0}),
+            html.P('Changed interesting insights to just measure latest month for ease of use', style={'margin': 0}),
             html.P("Future Plans:"),
-            html.Br(),
             html.P("Add missing Pokemon Sprites", style={'margin': 0}),
-            html.P("Add more generations to dropdown", style={'margin': 0}),
             html.P("Improve functionality of stats box", style={'margin': 0}),
             html.P("Choose specific range of dates in graph", style={'margin': 0})
         ], style={'marginTop': '50px',
@@ -103,17 +121,42 @@ app.layout = html.Div(
     ])
 
 
+@app.callback(
+    [Output('ladder-ranking', 'options'),
+     Output('ladder-ranking', 'value')],
+    [Input('tier-dropdown', 'value')]
+)
+def update_ladder_ranking_options(selected_tier):
+    if selected_tier == 'gen9ou':
+        options = [
+            {'label': '1000', 'value': 0},
+            {'label': '1500', 'value': 1500},
+            {'label': '1825', 'value': 1825}
+        ]
+        default_value = 0
+    else:
+        options = [
+            {'label': '1000', 'value': 0},
+            {'label': '1500', 'value': 1500},
+            {'label': '1760', 'value': 1760}
+        ]
+        default_value = 0
+
+    return options, default_value
+
+
 # Callback to update the graph
 @app.callback(
     Output('line-graph', 'figure'),
     [Input('tier-dropdown', 'value'),
-     Input('top-n-results', 'value')]
+     Input('top-n-results', 'value'),
+     Input('ladder-ranking', 'value')]
 )
-def update_graph(given_tier, top_n):
-    # Filter df_final by the selected tier
-    filtered_df = df_final[df_final['Tier'] == given_tier]
+def update_graph(given_tier, top_n, ladder_ranking):
+    # Filter df_final by the selected tier and ladder ranking
+    filtered_df = df_final[(df_final['Tier'] == given_tier) & (df_final['Ranking'] == ladder_ranking)]
     if filtered_df.empty:
-        print("No data avaliable for tier: {'given_tier}")
+        print("No data avaliable for tier: {'given_tier} in filtered_df!")
         return px.line(title=f'Top {top_n} Results')
 
     filtered_df['Month'] = pd.to_datetime(filtered_df['Month'])
@@ -127,11 +170,11 @@ def update_graph(given_tier, top_n):
     latest_top_n = sorted_df[sorted_df['Month'] == latest_month].nlargest(top_n, 'Usage Rate')
     top_n_array = latest_top_n['Name'].unique()
 
-    # Filter the DataFrame to include only those Pokémon across all months
+    # Filter the DataFrame to include only those top n Pokémon across all months
     concat_df = sorted_df[sorted_df['Name'].isin(top_n_array)]
 
     if concat_df.empty:
-        print(f"No data available for the top {top_n} Pokémon in tier: {given_tier}")
+        print(f"No data available for the top {top_n} Pokémon in tier: {given_tier} in concat_df!")
         return px.line(title=f'Top {top_n} Results')
 
     fig = px.line(concat_df, x='Month', y='Usage Rate', color="Name",
@@ -258,12 +301,13 @@ def update_stats_graph(clickData):
         return px.bar(title="Error displaying stats"), {'display': 'block', 'width': '60%', 'height': '80%'}
 
 
-cutoff_df = df_final[df_final['Usage Rate'] >= 3.406]
-# print(cutoff_df)
+cutoff_df = df_final[(df_final['Month'] == '2024-06') &
+    (df_final['Usage Rate'] >= 3.406)]
+cutoff_df.to_excel('test_date.xlsx')
+
 combined_cutoff_df = pd.concat([cutoff_df[['Name', 'Tier', 'Month', 'Type1']].rename(columns={'Type1': 'Type'}),
                                 cutoff_df[['Name', 'Tier', 'Month', 'Type2']].rename(columns={'Type2': 'Type'})])
-# print(combined_cutoff_df)
-# cutoff_df.to_excel('test_data.xlsx')
+#Remove all null boxes and boxes with "---"
 combined_cutoff_df = combined_cutoff_df.loc[
     combined_cutoff_df['Type'].notna() & (combined_cutoff_df['Type'] != '') & (combined_cutoff_df['Type'] != '---')]
 combined_cutoff_df.to_excel('test_data_two.xlsx')
@@ -283,7 +327,6 @@ lowest_bst_pokemon = cutoff_df.loc[cutoff_df.groupby('Tier')['BST'].idxmin()].se
 # Determine the average BST of the Pokemon in each tier
 average_bst_tier = cutoff_df.groupby('Tier')['BST'].mean().round().to_dict()
 
-
 # Callback to update conditional text based on dropdown selection
 @app.callback(
     Output('conditional-text', 'children'),
@@ -291,25 +334,41 @@ average_bst_tier = cutoff_df.groupby('Tier')['BST'].mean().round().to_dict()
 )
 def update_conditional_text(given_tier):
     common_type = most_common_types.get(given_tier, "Unknown")
-    uncommon_type = least_common_types.get(given_tier, "Unknown")
     highest_bst = highest_bst_pokemon.get(given_tier, "Unknown")
     lowest_bst = lowest_bst_pokemon.get(given_tier, "Unknown")
     average_bst = average_bst_tier.get(given_tier, "Unknown")
-    # highest_bst_pokemon_name = highest_bst_pokemon.get(given_tier, "Unknown")
+
+    # Define types to exclude based on generation (given_tier)
+    excluded_types = []
+    if given_tier in ["gen1ou"]:
+        excluded_types.extend(['dark', 'steel', 'fairy'])
+    elif given_tier in ["gen2ou", "gen3ou", "gen4ou", "gen5ou"]:
+        excluded_types.append('fairy')
+
+    # Function to get least common type, excluding specified types
+    def least_common_excluding(types):
+        type_counts = Counter(types)
+        for type_, count in type_counts.most_common()[::-1]:
+            if type_ not in excluded_types:
+                return type_
+        return "Unknown"
+
+    # Get the types for the given tier
+    tier_types = combined_cutoff_df[combined_cutoff_df['Tier'] == given_tier]['Type'].tolist()
+    uncommon_type = least_common_excluding(tier_types)
 
     table_style = {
         'border-collapse': 'collapse',
         'width': '40%',
         'border': '1px solid black',
-        'margin': '0 auto'  # This centers the table horizontally
+        'margin': '0 auto'
     }
-
     cell_style = {
         'border': '1px solid white',
         'padding': '8px',
         'text-align': 'center',
         'background-color': 'black',
-        'color': 'white'  # This changes the text color to white for better visibility
+        'color': 'white'
     }
 
     return html.Div([
@@ -333,10 +392,13 @@ def update_conditional_text(given_tier):
 
 
 # Run the app
+# if __name__ == '__main__':
+# app.run_server(debug=False, host='0.0.0.0', port=8080)
+
+# Run the app
 if __name__ == '__main__':
-    app.run_server(debug=False, host='0.0.0.0', port=8080)
+    app.run_server(debug=True)
 
 
-def update_graph_callback(top_n, given_tier):
-    return update_graph(top_n, given_tier)
-
+def update_graph_callback(top_n, given_tier, ladder_ranking):
+    return update_graph(top_n, given_tier, ladder_ranking)

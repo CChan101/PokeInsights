@@ -35,57 +35,55 @@ months_avaliable = ["2024-06", "2024-05", "2024-04", "2024-03", "2024-02", "2024
                          "2023-05", "2023-04", "2023-03", "2023-02", "2023-01",
                          "2022-12", "2022-11", "2022-10"]
 
-tier_list = ["gen9ubers", "gen9ou", "gen9uu", "gen9ru", "gen9nu", "gen9pu", "gen9zu"]
+tier_list = ["gen9ubers", "gen9ou", "gen9uu", "gen9ru", "gen9nu", "gen9pu", "gen9zu", "gen8ou", "gen7ou", "gen6ou", "gen5ou", "gen4ou", "gen3ou", "gen2ou", "gen1ou"]
+ladder_ranking = ["0", "1500", "1760", "1825"] #1825 is the highest measured ranking threshold for OU, while 1760 is the highest threshold for other tiers
 
 # List to hold the dataframes
 list_df = []
 
 app = dash.Dash(__name__)
 
-url = 'https://www.smogon.com/stats/{}/{}-0.txt'
+url = 'https://www.smogon.com/stats/{}/{}-{}.txt'
 
 # Set the max amount of column
 pd.set_option('display.max_columns', 7)
 
-condition = sprite_links['Name']
 # Read the csv with each loop iteration until you get the full list
 for months in months_avaliable:
-    # Use a flag to skip outer loop iteration(month) if inner loop(tier) encounters an error
-    skip_outer_loop = False
     for tier in tier_list:
-        try:
-            # Keep going through each tier/generation in successive for loop
-            full_link = url.format(months, tier)
-            
-            # Read the link every iteration
-            new_df = pd.read_csv(full_link)
-            
-            # Manipulate Data until you get seperate columns
-            new_df.columns = ['All']
-            new_df = new_df.drop([0, 1, 2, 3, ])
-            split_lines = new_df['All'].str.split('|', n=7, expand=True)
-            new_df['Rank'] = split_lines[1]
-            new_df['Name'] = split_lines[2]
-            new_df['Usage Rate'] = split_lines[3]
-            new_df['Raw Usage'] = split_lines[4]
-            new_df['Raw %'] = split_lines[5]
-            new_df['Real Usage'] = split_lines[6]
-            new_df['Real %'] = split_lines[7]
-            new_df.drop(columns=["All"], inplace=True)
-            new_df.dropna(inplace=True)
-            columns_to_drop = ['Real Usage', 'Real %']
-            new_df = new_df.drop(columns=columns_to_drop)
-            new_df['Tier'] = tier
-            new_df['Month'] = months
+        for ranking in ladder_ranking:
+            try:
+                # Keep going through each tier/generation in successive for loop
+                full_link = url.format(months, tier, ranking)
 
-            # Append the new DataFrame to the list
-            list_df.append(new_df)
-        except Exception as e:
-            skip_outer_loop = True
-            break
-        if skip_outer_loop:
-            continue
-            
+                # Read the link every iteration
+                new_df = pd.read_csv(full_link)
+
+                # Manipulate Data until you get seperate columns
+                new_df.columns = ['All']
+                new_df = new_df.drop([0, 1, 2, 3, ])
+                split_lines = new_df['All'].str.split('|', n=7, expand=True)
+                new_df['Rank'] = split_lines[1]
+                new_df['Name'] = split_lines[2]
+                new_df['Usage Rate'] = split_lines[3]
+                new_df['Raw Usage'] = split_lines[4]
+                new_df['Raw %'] = split_lines[5]
+                new_df['Real Usage'] = split_lines[6]
+                new_df['Real %'] = split_lines[7]
+                new_df.drop(columns=["All"], inplace=True)
+                new_df.dropna(inplace=True)
+                columns_to_drop = ['Real Usage', 'Real %']
+                new_df = new_df.drop(columns=columns_to_drop)
+                new_df['Tier'] = tier
+                new_df['Month'] = months
+                new_df['Ranking'] = ranking
+
+                # Append the new DataFrame to the list
+                list_df.append(new_df)
+            except Exception as e:
+                print(f"Error processing {months} {tier} {ranking}: {e}")
+                continue  # Continue with the next tier instead of breaking the month loop
+
 # Concatenate all DataFrames in the list into one DataFrame
 df_final = pd.concat(list_df, ignore_index=True)
 
