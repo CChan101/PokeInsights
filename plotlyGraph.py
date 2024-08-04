@@ -7,6 +7,7 @@ import dash
 from dash import dcc, html, Input, Output
 
 app = dash.Dash()
+server = app.server
 
 colors = {
     # Change color of background
