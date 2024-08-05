@@ -1,1 +1,1 @@
-Copyweb: gunicorn app:server -c gunicorn_config.py
+web: gunicorn app:server -c gunicorn_config.py
