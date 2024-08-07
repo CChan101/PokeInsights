@@ -7,7 +7,7 @@ COPY . ./
 
 RUN pip install -r requirements.txt
 
-EXPOSE 8080
+EXPOSE 10000
 
-ENTRYPOINT [ "gunicorn", "--config", "gunicorn_config.py", "plotlyGraph:server" ]
+CMD python plotlyGraph.py
 

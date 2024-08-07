@@ -395,7 +395,7 @@ def update_conditional_text(given_tier):
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
+    port = int(os.environ.get('PORT', 10000))
     host = '0.0.0.0'
     print(f"Starting server on {host}:{port}")
     app.run_server(debug=False, host=host, port=port)
