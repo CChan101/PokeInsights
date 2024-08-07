@@ -1,1 +1,2 @@
-web: gunicorn app:server -c gunicorn_config.py
+web: python plotlyGraph.py
+worker: python plotlyGraph.py
