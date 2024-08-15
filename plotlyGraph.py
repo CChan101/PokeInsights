@@ -395,10 +395,7 @@ def update_conditional_text(given_tier):
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8050))
-    host = '0.0.0.0'
-    print(f"Starting server on {host}:{port}")
-    app.run_server(debug=False, host=host, port=port)
+    app.run_server(debug=False, host='0.0.0.0', port=8080)
 
 
 def update_graph_callback(top_n, given_tier, ladder_ranking):
