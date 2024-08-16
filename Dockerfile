@@ -7,7 +7,7 @@ COPY . ./
 
 RUN pip install -r requirements.txt
 
-EXPOSE 8050
+EXPOSE 8080
 
 CMD python plotlyGraph.py
 
