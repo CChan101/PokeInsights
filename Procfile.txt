@@ -1,0 +1,2 @@
+web: python plotlyGraph.py
+worker: python plotlyGraph.py
