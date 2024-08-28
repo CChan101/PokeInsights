@@ -24,7 +24,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/github_username/repo_name">
-    <img src="assets\PokeInsights Logo.png" alt="Logo" width="80" height="80">
+    <img src="assets\PokeInsights Logo.png" alt="Logo" width="240" height="240">
   </a>
 
   <p align="center">
