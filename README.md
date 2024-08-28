@@ -24,22 +24,11 @@
 <br />
 <div align="center">
   <a href="https://github.com/github_username/repo_name">
-    <img src="openWebsite\assets\PokeInsights Logo.png" alt="Logo" width="80" height="80">
+    <img src="assets\PokeInsights Logo.png" alt="Logo" width="80" height="80">
   </a>
 
-<h3 align="center">project_title</h3>
-
   <p align="center">
-    A simple, easy to use, and intuitive data visualization tool for helping make learning to teambuild in competitive Pokemon (Smogon Format) more efficient and productive
-    <br />
-    <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/github_username/repo_name">View Demo</a>
-    ·
-    <a href="https://github.com/github_username/repo_name/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    ·
-    <a href="https://github.com/github_username/repo_name/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    A simple, easy to use, and intuitive data visualization tool for helping make learning to teambuild in competitive Pokemon (Smogon Format) more efficient and productive!
   </p>
 </div>
 
