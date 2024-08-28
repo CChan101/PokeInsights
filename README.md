@@ -23,9 +23,8 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/github_username/repo_name">
-    <img src="assets\PokeInsights Logo.png" alt="Logo" width="240" height="240">
-  </a>
+    <h1><strong>PokeInsights</strong></h1>
+</div>
 
   <p align="center">
     A simple, easy to use, and intuitive data visualization tool for helping make learning to teambuild in competitive Pokemon (Smogon Format) more efficient and productive!
