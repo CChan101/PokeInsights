@@ -39,6 +39,7 @@
 This tool assumes you have some basic knowledge of what competitive Pokemon is (what are tiers, what types does each Pokemon have, etc) but it should be easy to use it regardless of your skill level.
 
 Regardless, here is some important vocabulary to keep in mind:
+
 Tier: Each Pokemon is assigned a tier that allows it to match up with other Pokemon that share the same power level. Official Tiers are recognized by power level in descending order through OU(the "default" and tier with the most powerful Pokemon), UU, RU< NU, and PU. Pokemon can be used from a lower tier in a higher tier (ex. a UU Pokemon in OU) but not the other way around (ex. an OU Pokemon in RU). 
 
 Ladder: Pokemon Showdown has a skill-based ranking system that measures players by rank in a "ladder", helping them match against other players that may have a similar rank to them. The tool measures Pokemon usage at rank 1000(The lowest and most widely distributed rank), 1500(mid-ladder), and 1760/1825(high-ladder).
@@ -55,7 +56,7 @@ Ladder: Pokemon Showdown has a skill-based ranking system that measures players 
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+Distributed under the MIT License. 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
