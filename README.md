@@ -21,7 +21,6 @@
 
 
 <!-- PROJECT LOGO -->
-<br />
 <div align="center">
     <h1><strong>PokeInsights</strong></h1>
 </div>
