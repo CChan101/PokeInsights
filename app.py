@@ -37,6 +37,24 @@ app.layout = html.Div(
                 'text-align': 'left',
                 'color': "#FFFFFF"
             }),
+        html.H4(
+            children=[
+                "For more information on the tool itself visit my ",
+                html.A(
+                    "Github Repository",
+                    href="https://github.com/CChan101/PokeInsights",
+                    target="_blank",
+                    style={'color': '#1E90FF', 'text-decoration': 'underline'}  # Optional styling for the link
+                ),
+                "."
+            ],
+            className='responsive-text',
+            style={
+                'font-family': 'Roboto, sans-serif',
+                'text-align': 'left',
+                'color': "#FFFFFF"
+            }
+        ),
         dcc.Dropdown(
             id='top-n-results',
             options=[
