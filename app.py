@@ -97,8 +97,8 @@ app.layout = html.Div(
             clearable=False
         ), dcc.Dropdown(
             id='ladder-ranking',
-            options=[],  # We'll populate this dynamically
-            value=None,  # We'll set this dynamically
+            options=[],  
+            value=None,  
             searchable=False,
             clearable=False,
             style={'width': '150px', 'font-family': 'Roboto, sans-serif'}
