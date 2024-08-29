@@ -7,6 +7,7 @@ import dash
 from dash import dcc, html, Input, Output
 
 app = dash.Dash(__name__)
+app.title = 'PokeInsights'
 server = app.server
 
 colors = {
