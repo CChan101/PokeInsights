@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import dash
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 print("Running...")
 
@@ -30,13 +32,18 @@ sprite_links = pd.DataFrame(sprite_list)
 # Get pokemon stats from "list_of_pokemon_df.csv"
 pokemon_stats = pd.read_csv("list_of_pokemon_df.csv")
 
-months_avaliable = ["2024-06", "2024-05", "2024-04", "2024-03", "2024-02", "2024-01",
-                         "2023-12", "2023-11", "2023-10", "2023-09", "2023-08", "2023-07", "2023-06",
-                         "2023-05", "2023-04", "2023-03", "2023-02", "2023-01",
-                         "2022-12", "2022-11", "2022-10"]
+# Set start and end months
+start = datetime.strptime("2022-10", "%Y-%m")
+# Use last month as the endpoint
+end = (datetime.today().replace(day=1) - relativedelta(months=1))
+months_avaliable = []
+current = end
+while current >= start:
+    months_avaliable.append(current.strftime("%Y-%m"))
+    current -= relativedelta(months=1)
 
 tier_list = ["gen9ubers", "gen9ou", "gen9uu", "gen9ru", "gen9nu", "gen9pu", "gen9zu", "gen8ou", "gen7ou", "gen6ou", "gen5ou", "gen4ou", "gen3ou", "gen2ou", "gen1ou"]
-ladder_ranking = ["0", "1500", "1760", "1825"] #1825 is the highest measured ranking threshold for OU, while 1760 is the highest threshold for other tiers
+ladder_ranking = ["0", "1500", "1630", "1760", "1825"] #1825 is the highest measured ranking threshold for OU, while 1760 is the highest threshold for other tiers
 
 # List to hold the dataframes
 list_df = []
@@ -133,3 +140,4 @@ df_final['Usage Rate'] = df_final['Usage Rate'].apply(pd.to_numeric)
 
 df_final.to_excel('sample_data.xlsx')
 print("Data successfully scraped!")
+
