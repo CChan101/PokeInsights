@@ -1,4 +1,5 @@
-import datetime
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from collections import Counter
 
 import plotly.express as px
@@ -221,8 +222,8 @@ def update_graph(given_tier, top_n, ladder_ranking):
                       )
 
     # Set the x-axis range
-    start_date = datetime.datetime(2022, 10, 1)
-    end_date = datetime.datetime(2024, 7, 1)
+    start_date = datetime(2022, 10, 1)
+    end_date = datetime.today().replace(day=1) - relativedelta(months=1)
 
     fig.update_xaxes(dtick='M3', tickformat='%b %Y', range=[start_date, end_date])
     return fig
