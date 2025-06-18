@@ -8,7 +8,7 @@ import dash
 from dash import dcc, html, Input, Output
 import google.generativeai as genai
 
-genai.configure(api_key="######")
+genai.configure(api_key="######") #Use your own API key
 
 app = dash.Dash(__name__)
 app.title = 'PokeInsights'
