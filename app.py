@@ -1,11 +1,16 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from collections import Counter
+from functools import lru_cache
 
+import time
 import plotly.express as px
 import pandas as pd
 import dash
 from dash import dcc, html, Input, Output
+import google.generativeai as genai
+
+genai.configure(api_key="AIzaSyDXEg0dRLsCJHGg5PGzxoBo03s08ncEVr8")
 
 app = dash.Dash(__name__)
 app.title = 'PokeInsights'
@@ -17,6 +22,8 @@ colors = {
     'text': '#FFFFFF'
 }
 df_final = pd.read_excel("sample_data.xlsx")
+df_teammates = pd.read_csv("smogon_teammates_data.csv")
+df_checks = pd.read_csv("smogon_checks_data.csv")
 
 app.layout = html.Div(
     style={'backgroundColor': colors['background_color'], 'color': colors['text'], 'height': '100vh',
@@ -31,7 +38,7 @@ app.layout = html.Div(
         html.Img(src=r"/assets/PokeInsights Logo.png",
                  className='image-zoom', style={'textAlign': 'center'}),
         html.H4(
-            "An easy-to-use tool for gathering insights on statistics within competitive Pokemon(Smogon) and "
+            "Hello! An easy-to-use tool for gathering insights on statistics within competitive Pokemon(Smogon) and "
             "measuring trends such as usage rate. Use the dropdown and click on a point to get started!",
             className='responsive-text',
             style={
@@ -99,8 +106,8 @@ app.layout = html.Div(
             clearable=False
         ), dcc.Dropdown(
             id='ladder-ranking',
-            options=[],  
-            value=None,  
+            options=[],
+            value=None,
             searchable=False,
             clearable=False,
             style={'width': '150px', 'font-family': 'Roboto, sans-serif'}
@@ -115,7 +122,7 @@ app.layout = html.Div(
                                                'z-index': '10'}),
             html.Div(id='image-container',
                      style={'margin-top': '200px', 'margin-right': '600px', 'position': 'absolute', 'z-index': '10'}),
-            dcc.Graph(id='stats-graph', className='responsive-graph', responsive=True)
+            dcc.Graph(id='stats-graph', className='responsive-graph', responsive=True),
         ], style={'position': 'relative', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center',
                   'border': '2px solid white', 'padding': '10px', 'backgroundColor': '#111111',
                   'width': '800px', 'height': '450px', 'marginTop': '50px'},
@@ -128,14 +135,34 @@ app.layout = html.Div(
             'font-family': 'Roboto, sans-serif',
             'text-align': 'center'
         }, className='fun-facts'),
+        # In your app.layout children array, add:
         html.Div([
-            html.P('v1.01', style={'margin': 0}),
+            html.H3("Meta Analysis", style={'marginTop': '50px'}),
+            dcc.Loading(
+                id="ai-analysis-loading",
+                type="circle",
+                children=html.Div(id='ai-meta-summary', style={
+                    'whiteSpace': 'pre-line',
+                    'textAlign': 'left',
+                    'border': '2px solid #1E90FF',
+                    'padding': '20px',
+                    'margin': '20px auto',
+                    'maxWidth': '800px'
+                })
+            )
+        ], className='ai-analysis-section'),
+        html.Div([
+            html.P('v1.1'),
+            html.P('Automated insights feature to provide users with data-driven recommendations and trends*', style={'margin': 0}),
+            html.P('Monthly graph transitions now accurately display 0% usage for months when a Pokemon is banned, ensuring clearer data representation', style={'margin': 0}),
+            html.P("v1.01"),
             html.P('Added support for past OU generations and tier rankings', style={'margin': 0}),
             html.P('Changed interesting insights to just measure latest month for ease of use', style={'margin': 0}),
             html.P("Future Plans:"),
             html.P("Add missing Pokemon Sprites", style={'margin': 0}),
             html.P("Improve functionality of stats box", style={'margin': 0}),
-            html.P("Choose specific range of dates in graph", style={'margin': 0})
+            html.P("Choose specific range of dates in graph", style={'margin': 0}),
+            html.P("*Automated insights are generated using data I personally scraped from public Smogon data, ensuring no third-party or user data is involved.")
         ], style={'marginTop': '50px',
                   'font-family': 'Roboto, sans-serif',
                   'text-align': 'left'}, className='update-text')
@@ -150,21 +177,37 @@ app.layout = html.Div(
 def update_ladder_ranking_options(selected_tier):
     if selected_tier == 'gen9ou':
         options = [
-            {'label': '1000', 'value': 0},
+            {'label': '1000', 'value': 1000},
             {'label': '1500', 'value': 1500},
             {'label': '1825', 'value': 1825}
         ]
-        default_value = 0
+        default_value = 1000
+
     else:
         options = [
-            {'label': '1000', 'value': 0},
+            {'label': '1000', 'value': 1000},
             {'label': '1500', 'value': 1500},
             {'label': '1760', 'value': 1760}
         ]
-        default_value = 0
+        default_value = 1000
 
     return options, default_value
 
+def fill_missing_months(df, top_n_array):
+    df['Month'] = pd.to_datetime(df['Month'])
+    all_months = pd.date_range(df['Month'].min(), df['Month'].max(), freq='MS')
+    result = []
+    for name in top_n_array:
+        group = df[df['Name'] == name].set_index('Month').reindex(all_months, fill_value=0).reset_index()
+        group['Name'] = name
+        # Copy over other columns if needed (e.g., 'Sprite Links')
+        for col in ['Sprite Links', 'Ranking', 'Tier']:
+            if col in df.columns:
+                group[col] = df[df['Name'] == name][col].iloc[0] if not df[df['Name'] == name][col].empty else None
+        result.append(group)
+    df_filled = pd.concat(result)
+    df_filled.rename(columns={'index': 'Month'}, inplace=True)
+    return df_filled
 
 # Callback to update the graph
 @app.callback(
@@ -198,7 +241,8 @@ def update_graph(given_tier, top_n, ladder_ranking):
         print(f"No data available for the top {top_n} Pokémon in tier: {given_tier} in concat_df!")
         return px.line(title=f'Top {top_n} Results')
 
-    fig = px.line(concat_df, x='Month', y='Usage Rate', color="Name",
+    concat_df_filled = fill_missing_months(concat_df, top_n_array)
+    fig = px.line(concat_df_filled, x='Month', y='Usage Rate', color="Name",
                   title=None, markers=True, custom_data=['Sprite Links', 'Name'])
 
     fig.update_layout(template='plotly_dark', font=dict(color=colors['text']),
@@ -411,13 +455,119 @@ def update_conditional_text(given_tier):
         'width': '100%'
     })
 
+# Initialize client once (outside callbacks)
+
+import google.generativeai as genai
+
+genai.configure(api_key="AIzaSyDXEg0dRLsCJHGg5PGzxoBo03s08ncEVr8")  # Place at the top, after imports
+
+@app.callback(
+    Output('ai-meta-summary', 'children'),
+    [Input('tier-dropdown', 'value'),
+     Input('top-n-results', 'value'),
+     Input('ladder-ranking', 'value')]
+)
+
+def generate_meta_summary(given_tier, top_n, ladder_ranking):
+
+    filtered_df = df_final[
+        (df_final['Tier'] == given_tier) &
+        (df_final['Ranking'] == ladder_ranking)
+    ]
+
+    if filtered_df.empty:
+        return "No data available for analysis"
+
+    filtered_df['Month'] = pd.to_datetime(filtered_df['Month'])
+    latest_month = filtered_df['Month'].max()
+    # Ensure only Pokémon that are legal in this tier *this month* are considered
+    latest_data = filtered_df[
+        (filtered_df['Month'] == latest_month) &
+        (filtered_df['Tier'] == given_tier)
+        ].nlargest(top_n, 'Usage Rate')
+
+    """top_names = latest_data['Name'].tolist()
+
+    # Get teammates and checks for the top Pokémon
+    teammate_subset = df_teammates[df_teammates['Pokemon'].isin(top_names)]
+    check_subset = df_checks[df_checks['Pokemon'].isin(top_names)]
+
+    # Format top teammates (just a few per mon)
+    teammate_summary = teammate_subset.groupby("Pokemon").apply(
+        lambda df: ", ".join(df.sort_values("Usage %", ascending=False).head(3)['Teammate'])
+    ).to_dict()
+
+    # Format top checks (just a few per mon)
+    check_summary = check_subset.groupby("Pokemon").apply(
+        lambda df: ", ".join(df.sort_values("Usage %", ascending=False).head(3)['Check'])
+    ).to_dict()"""
+
+    #analysis_data = latest_data[['Name', 'Usage Rate', 'Tier','Ranking', 'Type1', 'Type2', 'BST', 'Month']]
+
+    #Get prev month data
+    prev_month = (pd.to_datetime(latest_month) - pd.DateOffset(months=1))
+    prev_data = filtered_df[
+        (filtered_df['Month'] == prev_month) &
+        (filtered_df['Tier'] == given_tier)
+        ].nlargest(top_n, 'Usage Rate')
+    # (Optional) Markdown tables
+    current_md_table = latest_data[['Name', 'Usage Rate', 'Tier', 'Type1', 'Type2', 'BST', 'Month']].to_markdown(
+        index=False)
+    prev_md_table = prev_data[['Name', 'Usage Rate', 'Tier', 'Type1', 'Type2', 'BST', 'Month']].to_markdown(index=False)
+    """prev_data = filtered_df[filtered_df['Month'] == prev_month]
+
+    if not prev_data.empty:
+        prev_usage = prev_data.nlargest(top_n, 'Usage Rate')[['Name', 'Usage Rate']]
+        merged = pd.merge(latest_data, prev_usage, on='Name', how='left', suffixes=('', '_prev'))
+        merged['Usage Change'] = merged['Usage Rate'] - merged['Usage Rate_prev'].fillna(0)
+        analysis_data = merged[['Name', 'Usage Rate', 'Tier', 'Type1', 'Type2', 'BST', 'Month']]
+    md_table = analysis_data.to_markdown(index=False, headers=[
+        'Name', 'Usage Rate', 'Tier', 'Type1', 'Type2', 'BST', 'Month'
+    ])
+    extra_info = "\n".join(
+        f"{mon}: Top Teammates → {teammate_summary.get(mon, 'N/A')} | Checks → {check_summary.get(mon, 'N/A')}"
+        for mon in top_names
+    )
+"""
+    prompt = f"""You are a competitive Pokémon analyst for {given_tier.upper()} format in.
+
+    TASK: Generate a 100-word meta analysis focusing on usage shifts from {prev_month} to {latest_month} in {ladder_ranking}.
+
+    ANALYSIS RULES:
+    - Only analyze Pokémon in the provided {given_tier.upper()} data
+    - Reference specific Pokémon names and percentages
+    - Do not invent roles or abilities not in the dataset
+    - Only base analysis on Usage Rate for a pokemon throughout {prev_month} to {latest_month}
+    - If a mon's usage is 0% for a month, assume it is not in the tier/banned
+    - current_md_table has the data for the current month. prev_md_table has the data for the previous month
+
+    DATA: {current_md_table}, {prev_md_table}
+
+"""
+
+    try:
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"AI Analysis Error: {str(e)}"
+
+    """extra_info = "\n".join(
+        f"{mon}: Top Teammates → {teammate_summary.get(mon, 'N/A')} | Checks → {check_summary.get(mon, 'N/A')}"
+        for mon in top_names
+    )
+
+    prompt += f"\n\nHere are the synergy and counter relationships for context:\n{extra_info}"""
+
 
 
 if __name__ == "__main__":
     # Get the port from the environment variable or use 8050 as default
     # Run the server
-    app.run_server(debug=False, host="0.0.0.0", port=8080)
+    app.run_server(debug=True)
 
 
 def update_graph_callback(top_n, given_tier, ladder_ranking):
     return update_graph(top_n, given_tier, ladder_ranking)
+
+
