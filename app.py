@@ -6,9 +6,6 @@ import plotly.express as px
 import pandas as pd
 import dash
 from dash import dcc, html, Input, Output
-import google.generativeai as genai
-
-genai.configure(api_key="######") #Use your own API key
 
 app = dash.Dash(__name__)
 app.title = 'PokeInsights'
@@ -457,7 +454,7 @@ def update_conditional_text(given_tier):
 
 import google.generativeai as genai
 
-genai.configure(api_key="AIzaSyDXEg0dRLsCJHGg5PGzxoBo03s08ncEVr8")  # Place at the top, after imports
+genai.configure(api_key="######") #Use your own API key
 
 @app.callback(
     Output('ai-meta-summary', 'children'),
