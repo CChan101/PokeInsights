@@ -1,9 +1,7 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from collections import Counter
-from functools import lru_cache
 
-import time
 import plotly.express as px
 import pandas as pd
 import dash
@@ -486,23 +484,6 @@ def generate_meta_summary(given_tier, top_n, ladder_ranking):
         (filtered_df['Tier'] == given_tier)
         ].nlargest(top_n, 'Usage Rate')
 
-    """top_names = latest_data['Name'].tolist()
-
-    # Get teammates and checks for the top Pokémon
-    teammate_subset = df_teammates[df_teammates['Pokemon'].isin(top_names)]
-    check_subset = df_checks[df_checks['Pokemon'].isin(top_names)]
-
-    # Format top teammates (just a few per mon)
-    teammate_summary = teammate_subset.groupby("Pokemon").apply(
-        lambda df: ", ".join(df.sort_values("Usage %", ascending=False).head(3)['Teammate'])
-    ).to_dict()
-
-    # Format top checks (just a few per mon)
-    check_summary = check_subset.groupby("Pokemon").apply(
-        lambda df: ", ".join(df.sort_values("Usage %", ascending=False).head(3)['Check'])
-    ).to_dict()"""
-
-    #analysis_data = latest_data[['Name', 'Usage Rate', 'Tier','Ranking', 'Type1', 'Type2', 'BST', 'Month']]
 
     #Get prev month data
     prev_month = (pd.to_datetime(latest_month) - pd.DateOffset(months=1))
@@ -514,21 +495,7 @@ def generate_meta_summary(given_tier, top_n, ladder_ranking):
     current_md_table = latest_data[['Name', 'Usage Rate', 'Tier', 'Type1', 'Type2', 'BST', 'Month']].to_markdown(
         index=False)
     prev_md_table = prev_data[['Name', 'Usage Rate', 'Tier', 'Type1', 'Type2', 'BST', 'Month']].to_markdown(index=False)
-    """prev_data = filtered_df[filtered_df['Month'] == prev_month]
 
-    if not prev_data.empty:
-        prev_usage = prev_data.nlargest(top_n, 'Usage Rate')[['Name', 'Usage Rate']]
-        merged = pd.merge(latest_data, prev_usage, on='Name', how='left', suffixes=('', '_prev'))
-        merged['Usage Change'] = merged['Usage Rate'] - merged['Usage Rate_prev'].fillna(0)
-        analysis_data = merged[['Name', 'Usage Rate', 'Tier', 'Type1', 'Type2', 'BST', 'Month']]
-    md_table = analysis_data.to_markdown(index=False, headers=[
-        'Name', 'Usage Rate', 'Tier', 'Type1', 'Type2', 'BST', 'Month'
-    ])
-    extra_info = "\n".join(
-        f"{mon}: Top Teammates → {teammate_summary.get(mon, 'N/A')} | Checks → {check_summary.get(mon, 'N/A')}"
-        for mon in top_names
-    )
-"""
     prompt = f"""You are a competitive Pokémon analyst for {given_tier.upper()} format in.
 
     TASK: Generate a 100-word meta analysis focusing on usage shifts from {prev_month} to {latest_month} in {ladder_ranking}.
@@ -552,14 +519,6 @@ def generate_meta_summary(given_tier, top_n, ladder_ranking):
     except Exception as e:
         return f"AI Analysis Error: {str(e)}"
 
-    """extra_info = "\n".join(
-        f"{mon}: Top Teammates → {teammate_summary.get(mon, 'N/A')} | Checks → {check_summary.get(mon, 'N/A')}"
-        for mon in top_names
-    )
-
-    prompt += f"\n\nHere are the synergy and counter relationships for context:\n{extra_info}"""
-
-
 
 if __name__ == "__main__":
     # Get the port from the environment variable or use 8050 as default
@@ -569,5 +528,7 @@ if __name__ == "__main__":
 
 def update_graph_callback(top_n, given_tier, ladder_ranking):
     return update_graph(top_n, given_tier, ladder_ranking)
+
+
 
 
