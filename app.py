@@ -2,6 +2,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from collections import Counter
 
+import os
 import plotly.express as px
 import pandas as pd
 import dash
@@ -520,7 +521,8 @@ def generate_meta_summary(given_tier, top_n, ladder_ranking):
 if __name__ == "__main__":
     # Get the port from the environment variable or use 8050 as default
     # Run the server
-    app.run_server(debug=False, host = "0.0.0.0")
+    port = int(os.environ.get("PORT", 8080))
+    app.run_server(debug=False, host="0.0.0.0", port=port)
 
 
 def update_graph_callback(top_n, given_tier, ladder_ranking):
