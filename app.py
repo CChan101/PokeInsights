@@ -520,7 +520,7 @@ def generate_meta_summary(given_tier, top_n, ladder_ranking):
 if __name__ == "__main__":
     # Get the port from the environment variable or use 8050 as default
     # Run the server
-    app.run_server(debug=True)
+    app.run_server(debug=False, host = "0.0.0.0")
 
 
 def update_graph_callback(top_n, given_tier, ladder_ranking):
